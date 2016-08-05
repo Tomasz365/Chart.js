@@ -434,11 +434,13 @@ module.exports = function(Chart) {
                     for (var i = 0; i < me.data.datasets.length; i++) {
                         var meta = me.getDatasetMeta(i);
                         if (me.isDatasetVisible(i)) {
+                        	var inRangeList = [];
                             for (var j = 0; j < meta.data.length; j++) {
                                 if (meta.data[j].inLabelRange(eventPosition.x, eventPosition.y)) {
-                                    return meta.data[j];
+                                    inRangeList.push(meta.data[j]);
                                 }
                             }
+                            return inRangeList[Math.floor(inRangeList.length/2)]; //Return leftmost in the middle
                         }
                     }
                 }
@@ -458,7 +460,7 @@ module.exports = function(Chart) {
             }, me);
 
             return elementsArray;
-        },		
+        },
 
 		getElementsAtEventForMode: function(e, mode) {
 			var me = this;

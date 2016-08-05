@@ -38,6 +38,8 @@ module.exports = function(Chart) {
 			maxRotation: 50,
 			mirror: false,
 			padding: 10,
+			paddingVertical: 0,
+			showUnderAxis: false,
 			reverse: false,
 			display: true,
 			autoSkip: true,
@@ -404,7 +406,10 @@ module.exports = function(Chart) {
 				if ((rawValue instanceof Date) || (rawValue.isValid)) {
 					return rawValue;
 				} else {
-					return this.getRightValue(this.isHorizontal() ? rawValue.x : rawValue.y);
+					if(typeof rawValue.getValue!='undefined'){
+						return rawValue.getValue();
+					} else
+						return this.getRightValue(this.isHorizontal() ? rawValue.x : rawValue.y);
 				}
 			}
 
@@ -626,6 +631,8 @@ module.exports = function(Chart) {
 					x1 = chartArea.left;
 					x2 = chartArea.right;
 					ty1 = ty2 = y1 = y2 = yLineValue;
+					labelY = labelY + optionTicks.paddingVertical;
+					if(optionTicks.paddingVertical>0 && optionTicks.showUnderAxis==false && labelY>me.height) label = "";
 				}
 
 				itemsToDraw.push({

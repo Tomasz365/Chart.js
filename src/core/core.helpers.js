@@ -141,13 +141,19 @@ module.exports = function(Chart) {
 		}
 
 		if (helpers.isArray(value)) {
-			return index < value.length ? value[index] : defaultValue;
+			return index < value.length ? (helpers.isObject(value[index])?value.getValue():value[index]) : defaultValue;
+		} else if(helpers.isObject(value)){
+			return value.getValue();
 		}
 
 		return value;
 	};
 	helpers.getValueOrDefault = function(value, defaultValue) {
-		return value === undefined ? defaultValue : value;
+		if(value === undefined){
+			return defaultValue;
+		} else {
+			return helpers.isObject(value) ? value.getValue() : value;
+		}
 	};
 	helpers.indexOf = Array.prototype.indexOf?
 		function(array, item) { return array.indexOf(item); } :
@@ -908,6 +914,11 @@ module.exports = function(Chart) {
 		function(obj) { return Array.isArray(obj); } :
 		function(obj) {
 			return Object.prototype.toString.call(obj) === '[object Array]';
+		};
+
+	helpers.isObject =
+		function(obj) {
+			return typeof obj === 'object' && !helpers.isArray(obj);
 		};
 	//! @see http://stackoverflow.com/a/14853974
 	helpers.arrayEquals = function(a0, a1) {

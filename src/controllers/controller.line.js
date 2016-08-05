@@ -204,7 +204,8 @@ module.exports = function(Chart) {
 				borderWidth: me.getPointBorderWidth(point, index),
 				tension: meta.dataset._model ? meta.dataset._model.tension : 0,
 				steppedLine: meta.dataset._model ? meta.dataset._model.steppedLine : false,
-				// Tooltip
+				width: custom.pointWidth || helpers.getValueAtIndexOrDefault(dataset.pointWidth, index, this.chart.options.elements.point.radius),
+			// Tooltip
 				hitRadius: custom.hitRadius || helpers.getValueAtIndexOrDefault(dataset.pointHitRadius, index, pointOptions.hitRadius)
 			};
 		},
@@ -303,6 +304,7 @@ module.exports = function(Chart) {
 			var model = point._model;
 
 			model.radius = custom.hoverRadius || helpers.getValueAtIndexOrDefault(dataset.pointHoverRadius, index, this.chart.options.elements.point.hoverRadius);
+			model.width = custom.pointHoverWidth || helpers.getValueAtIndexOrDefault(dataset.pointHoverWidth, index, this.chart.options.elements.point.hoverRadius);
 			model.backgroundColor = custom.hoverBackgroundColor || helpers.getValueAtIndexOrDefault(dataset.pointHoverBackgroundColor, index, helpers.getHoverColor(model.backgroundColor));
 			model.borderColor = custom.hoverBorderColor || helpers.getValueAtIndexOrDefault(dataset.pointHoverBorderColor, index, helpers.getHoverColor(model.borderColor));
 			model.borderWidth = custom.hoverBorderWidth || helpers.getValueAtIndexOrDefault(dataset.pointHoverBorderWidth, index, model.borderWidth);
@@ -320,7 +322,8 @@ module.exports = function(Chart) {
 				dataset.pointRadius = dataset.radius;
 			}
 
-			model.radius = custom.radius || helpers.getValueAtIndexOrDefault(dataset.pointRadius, index, me.chart.options.elements.point.radius);
+			model.radius = custom.radius || helpers.getValueAtIndexOrDefault(dataset.pointHoverRadius, index, me.chart.options.elements.point.radius);
+			model.width = custom.pointWidth || helpers.getValueAtIndexOrDefault(dataset.pointWidth, index, me.chart.options.elements.point.radius);
 			model.backgroundColor = me.getPointBackgroundColor(point, index);
 			model.borderColor = me.getPointBorderColor(point, index);
 			model.borderWidth = me.getPointBorderWidth(point, index);

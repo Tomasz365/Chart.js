@@ -25,10 +25,11 @@
     <button id="addDataset">Add Dataset</button>
     <button id="removeDataset">Remove Dataset</button>
     <button id="addData">Add Data</button>
-    <button id="removeData">Remove Data</button>
+	<button id="removeData">Remove Data</button>
+	<button id="changeMinMax">Change Min Max</button>
     <script>
         var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
+
         var randomScalingFactor = function() {
             return Math.round(Math.random() * 100);
             //return 0;
@@ -108,8 +109,10 @@
                             labelString: 'Value'
                         },
                         ticks: {
-                            suggestedMin: -10,
-                            suggestedMax: 250,
+//                            suggestedMin: -10,
+//                            suggestedMax: 250,
+							min: -10,
+							max: 50
                         }
                     }]
                 }
@@ -202,6 +205,12 @@
             config.data.datasets.splice(0, 1);
             window.myLine.update();
         });
+
+		$('#removeDataset').click(function() {
+			config.options.scales.yAxes[0].ticks.min = 10;
+			config.options.scales.yAxes[0].ticks.max = 30;
+			window.myLine.update();
+		});
 
         $('#removeData').click(function() {
             config.data.labels.splice(-1, 1); // remove the label first

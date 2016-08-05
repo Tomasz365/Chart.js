@@ -15,7 +15,9 @@ module.exports = function(Chart) {
 		// Hover
 		hitRadius: 1,
 		hoverRadius: 4,
-		hoverBorderWidth: 1
+		hoverBorderWidth: 1,
+		pointWidth: 2,
+		pointHoverWidth: 3,
 	};
 
 	Chart.elements.Point = Chart.Element.extend({
@@ -40,6 +42,7 @@ module.exports = function(Chart) {
 			var ctx = this._chart.ctx;
 			var pointStyle = vm.pointStyle;
 			var radius = vm.radius;
+			var width = vm.width;
 			var x = vm.x;
 			var y = vm.y;
 
@@ -51,7 +54,7 @@ module.exports = function(Chart) {
 			ctx.lineWidth = helpers.getValueOrDefault(vm.borderWidth, globalOpts.elements.point.borderWidth);
 			ctx.fillStyle = vm.backgroundColor || defaultColor;
 
-			Chart.canvasHelpers.drawPoint(ctx, pointStyle, radius, x, y);
+			Chart.canvasHelpers.drawPoint(ctx, pointStyle, width, x, y);
 		}
 	});
 };

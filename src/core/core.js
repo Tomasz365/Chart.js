@@ -6,7 +6,7 @@ module.exports = function() {
 	var Chart = function(context, config) {
 		var me = this;
 		var helpers = Chart.helpers;
-		me.config = config || { 
+		me.config = config || {
 			data: {
 				datasets: []
 			}
