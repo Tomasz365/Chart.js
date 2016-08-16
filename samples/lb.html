@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Line Chart</title>
+	<script src="../moment-with-locales.js"></script>
+	<script src="../jquery.min.js"></script>
+	<script src="../dist/Chart.bundle.js"></script>
+	<style>
+		canvas {
+			-moz-user-select: none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+		}
+	</style>
+</head>
+<body>
+<div style="width:200px; height: 150px;">
+	<canvas id="canvas"></canvas>
+</div>
+
+<script>
+	var type='realtime';
+	var charts = {config: null, chart: null, datasets: [], yAxes: []};
+	var color = "rgba(255,0,0,1)";
+
+
+	charts['config'] = {
+		data: {
+			datasets: charts.datasets
+		},
+		options: {
+			hover: {
+				mode: 'x-axis',
+				onHover: function (a) {
+					if(a.length>0) {
+						var z = a[0];
+						// console.log(z._datasetIndex,z._index,$scope.chartConfig.data.datasets,$scope.chartConfig.data.datasets[z._datasetIndex].data[z._index]);
+						// this.showTemporaryValue($scope.chartConfig.data.datasets[z._datasetIndex].data[z._index].getValue());
+					}
+				}.bind(this),
+			},
+			legend: {
+				display: false
+			},
+			scales: {
+				yAxes: charts.yAxes,
+				xAxes: [{
+					// type: "linear", // scatter should not use a category axis
+					position: "bottom",
+					id: "x-axis-1", // need an ID so datasets can reference the scale
+					type: 'time',
+					ticks:{
+						maxTicksLimit: 10,
+						padding: 0,
+						maxRotation: 0,
+						fontSize: 8,
+						autoSkip: true,
+					},
+					time: {
+						unit: (type=='realtime')?'seconds':null,
+						displayFormats: {
+							day: 'll',
+							quarter: 'MMM YYYY',
+							seconds: ' hh[\n]mm[\n]ss ',
+							minute: ' hh:mm ',
+						}
+					}
+				}]
+			}
+		}
+	};
+
+
+	axis = {
+		type: "linear", // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
+		display: (type=='realtime'?true:true),
+		position: "left",
+		id: "t_a",
+		gridLines:{
+			display: true,
+		},
+		_chart: charts,
+		ticks: {
+			beginAtZero:false,
+			maxTicksLimit: 4,
+			padding: 0,
+			maxRotation: 90,
+			fontSize: 10,
+			paddingVertical: 10,
+			showUnderAxis: false,
+			fontColor: color,
+			scaleOverride : true
+		}
+	}
+	charts.yAxes.push(axis);
+
+	charts['datasets'].push({
+		sensor: null,
+		data: [],
+		yAxisID: "t_a",
+		xAxisID: "x-axis-1",
+		borderCapStyle: 'butt', borderDash: [],borderDashOffset: 0.0,borderJoinStyle: 'miter',pointBackgroundColor: "#fff",borderWidth: 1,pointBorderWidth: 1,pointHoverRadius: 20,pointHoverBorderWidth: 1,pointRadius: 20, pointWidth: 0, pointHoverWidth: 0, pointHitRadius: 1,lineTension: 0,
+		pointBorderColor: color,
+		backgroundColor: color.substr(0,color.length-3)+",0.0)",
+		borderColor: color
+	});
+
+	function addPoint(time) {
+		if(typeof time == 'undefined') {
+			var label = moment().millisecond(0);
+		} else {
+			var label = moment(time).millisecond(0);
+		}
+		var val = Math.random();
+		var ds = charts.datasets[0];
+		ds.data.insert({x: label, y: val}, 'x', function (x) {
+			return x.valueOf()
+		});
+		charts['chart'].update();
+
+//		setAxisMax("t_a", val);
+//		setAxisMin("t_a", val);
+	}
+
+	var ctx = $("#canvas");
+	charts['chart'] = Chart.Scatter(ctx, charts['config']);
+
+
+	Array.prototype.insert = function(element,objectProperty,objectPropertyModifier) {
+		if(typeof objectProperty!='undefined'){
+			if(typeof  objectPropertyModifier == 'undefined') {
+				objectPropertyModifier = function(x){return x;};
+			}
+			var location = this.locationOfProp(element, objectProperty, objectPropertyModifier) + 1;
+		} else {
+			var location = this.locationOf(element) + 1;
+		}
+		this.splice(location, 0, element);
+		return location;
+	}
+
+	Array.prototype.locationOfProp = function(element, objectProperty, objectPropertyModifier, start, end) {
+		start = start || 0;
+		end = end || this.length;
+		var pivot = parseInt(start + (end - start) / 2, 10);
+		if (end-start <= 1 || objectPropertyModifier(this[pivot][objectProperty]) === objectPropertyModifier(element[objectProperty])) return pivot;
+		if (objectPropertyModifier(this[pivot][objectProperty]) < objectPropertyModifier(element[objectProperty])) {
+			return this.locationOfProp(element, objectProperty, objectPropertyModifier, pivot, end);
+		} else {
+			return this.locationOfProp(element, objectProperty, objectPropertyModifier, start, pivot);
+		}
+	}
+
+	Array.prototype.locationOf = function(element, start, end) {
+		start = start || 0;
+		end = end || this.length;
+		var pivot = parseInt(start + (end - start) / 2, 10);
+		if (end-start <= 1 || this[pivot] === element) return pivot;
+		if (this[pivot] < element) {
+			return this.locationOf(element, pivot, end);
+		} else {
+			return this.locationOf(element, start, pivot);
+		}
+	}
+
+	setInterval(function(){
+		console.log("ADD POINT");
+		addPoint();
+	},1000);
+
+</script>
+
+</body>
+</html>
