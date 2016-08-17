@@ -149,7 +149,7 @@ module.exports = function(Chart) {
 		return value;
 	};
 	helpers.getValueOrDefault = function(value, defaultValue) {
-		if(value === undefined){
+		if(value === undefined || value==null){
 			return defaultValue;
 		} else {
 			return helpers.isObject(value) ? value.getValue() : value;
