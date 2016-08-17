@@ -101,7 +101,7 @@ module.exports = function(Chart) {
 
 			// Notify any plugins about the resize
 			var newSize = { width: newWidth, height: newHeight };
-			console.log("CHRT NEW SIZE",newSize, helpers.getMaximumHeight(canvas));
+			// console.log("CHRT NEW SIZE",newSize, helpers.getMaximumHeight(canvas));
 			Chart.plugins.notify('resize', [me, newSize]);
 
 			// Notify of resize

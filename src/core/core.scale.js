@@ -296,7 +296,7 @@ module.exports = function(Chart) {
 				// subtract the margins to line up with the chartArea if we are a full width scale
 				minSize.width = me.isFullWidth() ? me.maxWidth - me.margins.left - me.margins.right : me.maxWidth;
 			} else {
-				minSize.width = display ? tickMarkLength : 0;
+				if(tickOpts.display) minSize.width = display ? tickMarkLength : 0;
 			}
 
 			// height
