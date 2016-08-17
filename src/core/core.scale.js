@@ -371,11 +371,12 @@ module.exports = function(Chart) {
 			}
 
 			if (me.margins) {
-				me.paddingLeft = Math.max(me.paddingLeft - me.margins.left, 0);
-				me.paddingTop = Math.max(me.paddingTop - me.margins.top, 0);
-				me.paddingRight = Math.max(me.paddingRight - me.margins.right, 0);
-				me.paddingBottom = Math.max(me.paddingBottom - me.margins.bottom, 0);
+				me.paddingLeft = 0; //Math.max(me.paddingLeft - me.margins.left, 0);
+				me.paddingTop = 0; //Math.max(me.paddingTop - me.margins.top, 0);
+				me.paddingRight = 0; //Math.max(me.paddingRight - me.margins.right, 0);
+				me.paddingBottom = 0; //Math.max(me.paddingBottom - me.margins.bottom, 0);
 			}
+
 
 			me.width = minSize.width;
 			me.height = minSize.height;
@@ -569,6 +570,7 @@ module.exports = function(Chart) {
 				}
 
 				var isLastTick = me.ticks.length === index + 1;
+				var isFistTick = index==0;
 
 				// Since we always show the last tick,we need may need to hide the last shown one before
 				var shouldSkip = (skipRatio > 1 && index % skipRatio > 0) || (index % skipRatio === 0 && index + skipRatio >= me.ticks.length);
@@ -606,6 +608,8 @@ module.exports = function(Chart) {
 					ty2 = yTickEnd;
 					y1 = chartArea.top;
 					y2 = chartArea.bottom;
+					if(isFistTick) textAlign = 'left';
+					else if(isLastTick) textAlign = 'right';
 				} else {
 					if (options.position === 'left') {
 						if (optionTicks.mirror) {

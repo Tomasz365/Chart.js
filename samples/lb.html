@@ -58,11 +58,12 @@
 					},
 					time: {
 						unit: (type=='realtime')?'seconds':null,
+						onlyUnique: true,
 						displayFormats: {
 							day: 'll',
 							quarter: 'MMM YYYY',
-							seconds: ' hh[\n]mm[\n]ss ',
-							minute: ' hh:mm ',
+							seconds: ' HH:mm ',
+							minute: 'HHHHHH HH:mm HHHHH',
 						}
 					}
 				}]
@@ -73,14 +74,17 @@
 
 	axis = {
 		type: "linear", // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
-		display: (type=='realtime'?true:true),
+//		display: (type=='realtime'?true:true),
+		display: true,
 		position: "left",
 		id: "t_a",
 		gridLines:{
 			display: true,
+			drawTicks: false,
 		},
 		_chart: charts,
 		ticks: {
+			display: false,
 			beginAtZero:false,
 			maxTicksLimit: 4,
 			padding: 0,
@@ -163,10 +167,20 @@
 		}
 	}
 
+	var m = moment();
+	for(var i = 0; i < 300; i++){
+
+	}
 	setInterval(function(){
 		console.log("ADD POINT");
 		addPoint();
 	},1000);
+	/*addPoint(1471298400*1000);
+	addPoint( (1471298400+1*3600)  *1000);
+	addPoint( (1471298400+2*3600)  *1000);
+	addPoint( (1471298400+3*3600)  *1000);
+	addPoint( (1471298400+4*3600)  *1000);
+	addPoint( (1471298400+5*3600)  *1000);*/
 
 </script>
 

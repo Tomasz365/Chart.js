@@ -86,6 +86,7 @@ module.exports = function(Chart) {
 			var newWidth = helpers.getMaximumWidth(canvas);
 			var aspectRatio = chart.aspectRatio;
 			var newHeight = (me.options.maintainAspectRatio && isNaN(aspectRatio) === false && isFinite(aspectRatio) && aspectRatio !== 0) ? newWidth / aspectRatio : helpers.getMaximumHeight(canvas);
+			newHeight = helpers.getMaximumHeight(canvas);
 
 			var sizeChanged = chart.width !== newWidth || chart.height !== newHeight;
 
@@ -100,6 +101,7 @@ module.exports = function(Chart) {
 
 			// Notify any plugins about the resize
 			var newSize = { width: newWidth, height: newHeight };
+			console.log("CHRT NEW SIZE",newSize, helpers.getMaximumHeight(canvas));
 			Chart.plugins.notify('resize', [me, newSize]);
 
 			// Notify of resize

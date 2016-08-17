@@ -46,8 +46,10 @@ module.exports = function(Chart) {
 			format: false, // DEPRECATED false == date objects, moment object, callback or a pattern string from http://momentjs.com/docs/#/parsing/string-format/
 			unit: false, // false == automatic or override with week, month, year, etc.
 			round: false, // none, or override with week, month, year, etc.
+			roundExtremes: 'second', // none, or override with week, month, year, etc.
 			displayFormat: false, // DEPRECATED
 			isoWeekday: false, // override week start day - see http://momentjs.com/docs/#/get-set/iso-weekday/
+			onlyUnique: false,
 
 			// defaults to unit's corresponding unitFormat below or override using pattern string from http://momentjs.com/docs/#/displaying/format/
 			displayFormats: {
@@ -84,10 +86,11 @@ module.exports = function(Chart) {
 		},
 		getMomentStartOf: function(tick) {
 			var me = this;
-			if (me.options.time.unit === 'week' && me.options.time.isoWeekday !== false) {
+			var unit = me.options.time.roundExtremes;
+			if (unit === 'week' && me.options.time.isoWeekday !== false) {
 				return tick.clone().startOf('isoWeek').isoWeekday(me.options.time.isoWeekday);
 			} else {
-				return tick.clone().startOf(me.tickUnit);
+				return tick.clone().startOf(unit);
 			}
 		},
 		determineDataLimits: function() {
@@ -232,6 +235,7 @@ module.exports = function(Chart) {
 			}
 
 			var roundedStart;
+			var uniqueTicks = [];
 
 			// Only round the first tick if we have no hard minimum
 			if (!me.options.time.min) {
@@ -281,7 +285,13 @@ module.exports = function(Chart) {
 				}
 
 				if (i % me.unitScale === 0) {
-					me.ticks.push(newTick);
+					if(me.options.time.onlyUnique){
+						if(me.tickFormatFunction(me.ticks[me.ticks.length-1])!=me.tickFormatFunction(newTick)) {
+							me.ticks.push(newTick);
+						}
+					} else {
+						me.ticks.push(newTick);
+					}
 				}
 			}
 
@@ -291,11 +301,20 @@ module.exports = function(Chart) {
 				// this is a weird case. If the <max> option is the same as the end option, we can't just diff the times because the tick was created from the roundedStart
 				// but the last tick was not rounded.
 				if (me.options.time.max) {
-					me.ticks.push(me.lastTick.clone());
-					me.scaleSizeInUnits = me.lastTick.diff(me.ticks[0], me.tickUnit, true);
+					if(me.ticks.length>0) {
+						me.scaleSizeInUnits = me.lastTick.diff(me.ticks[0], me.tickUnit, true);
+					} else {
+						me.scaleSizeInUnits = me.lastTick.diff(me.lastTick, me.tickUnit, true);
+					}
+				} else {
+					me.scaleSizeInUnits = me.lastTick.diff(me.firstTick, me.tickUnit, true);
+				}
+				if(me.options.time.onlyUnique){
+					if(me.tickFormatFunction(me.ticks[me.ticks.length-1])!=me.tickFormatFunction(me.lastTick.clone())) {
+						me.ticks.push(me.lastTick.clone());
+					}
 				} else {
 					me.ticks.push(me.lastTick.clone());
-					me.scaleSizeInUnits = me.lastTick.diff(me.firstTick, me.tickUnit, true);
 				}
 			}
 
