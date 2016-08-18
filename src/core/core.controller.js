@@ -227,8 +227,9 @@ module.exports = function(Chart) {
 				me.getDatasetMeta(datasetIndex).controller.reset();
 			}, me);
 		},
-
+		// upc: 0,
 		update: function update(animationDuration, lazy) {
+			// console.error("Update ",this.upc++);
 			var me = this;
 			Chart.plugins.notify('beforeUpdate', [me]);
 

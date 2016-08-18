@@ -317,7 +317,7 @@ module.exports = function(Chart) {
 					me.ticks.push(me.lastTick.clone());
 				}
 			}
-
+// console.log("TICKS ",me.ticks.length,me.ticks)
 			me.ctx.restore();
 		},
 		// Get tooltip label
@@ -336,9 +336,18 @@ module.exports = function(Chart) {
 
 			return label;
 		},
+
+
+		tickFormatCache: {},
+
 		// Function to format an individual tick mark
 		tickFormatFunction: function(tick, index, ticks) {
-			var formattedTick = tick.format(this.displayFormat);
+			if(this.tickFormatCache[tick.valueOf() + "_" + this.displayFormat]!==undefined){
+				var formattedTick = this.tickFormatCache[tick.valueOf() + "_" + this.displayFormat];
+			} else {
+				var formattedTick = tick.format(this.displayFormat);
+				this.tickFormatCache[tick.valueOf() + "_" + this.displayFormat] = formattedTick;
+			}
 			if(formattedTick.indexOf("\n")>0){
 				formattedTick = formattedTick.split("\n");
 			}
