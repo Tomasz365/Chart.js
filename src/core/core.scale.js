@@ -479,11 +479,11 @@ module.exports = function(Chart) {
 				0);
 		},
 
-		drawcnt: 0,
+		// drawcnt: 0,
 		// Actualy draw the scale on the canvas
 		// @param {rectangle} chartArea : the area of the chart to draw full grid lines on
 		draw: function(chartArea) {
-			console.log("draw()",++this.drawcnt);
+			// console.log("draw()",++this.drawcnt);
 			var me = this;
 			var options = me.options;
 			if (!options.display) {
@@ -707,7 +707,7 @@ module.exports = function(Chart) {
 				}
 
 				//Set last tick textAlign to center if not at full right
-				if(lp.x1 +  lp.labelWidth < me.right){
+				if(lp.x1 +  lp.labelWidth < me.right+15){
 					lp.textAlign = 'center';
 				}
 			}

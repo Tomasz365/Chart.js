@@ -13,7 +13,7 @@
 		}
 	</style>
 </head>
-<body>
+<body style="margin: 0; padding: 0;">
 <div style="width:200px; height: 150px;">
 	<canvas id="canvas"></canvas>
 </div>
@@ -29,6 +29,9 @@
 			datasets: charts.datasets
 		},
 		options: {
+			animation: {
+				duration: 0
+			},
 			hover: {
 				mode: 'x-axis',
 				onHover: function (a) {
@@ -58,7 +61,7 @@
 					},
 					time: {
 						unit: (type=='realtime')?'seconds':null,
-						onlyUnique: true,
+//						onlyUnique: true,
 						displayFormats: {
 							day: 'll',
 							quarter: 'MMM YYYY',
@@ -80,11 +83,11 @@
 		id: "t_a",
 		gridLines:{
 			display: true,
-			drawTicks: false,
+			drawTicks: true,
 		},
 		_chart: charts,
 		ticks: {
-			display: false,
+			display: true,
 			beginAtZero:false,
 			maxTicksLimit: 4,
 			padding: 0,
@@ -93,10 +96,14 @@
 			paddingVertical: 10,
 			showUnderAxis: false,
 			fontColor: color,
-			scaleOverride : true
+			scaleOverride : true,
+			noPad: true,
 		}
 	}
+	var axis2 = $.extend({},axis);
+	axis2.id="t_b";
 	charts.yAxes.push(axis);
+	charts.yAxes.push(axis2);
 
 	charts['datasets'].push({
 		sensor: null,
