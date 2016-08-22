@@ -42,6 +42,7 @@ module.exports = function(Chart) {
 			padding: 10,
 			paddingVertical: 0,
 			showUnderAxis: false,
+			noPad: false,
 			reverse: false,
 			display: true,
 			autoSkip: true,
@@ -296,7 +297,7 @@ module.exports = function(Chart) {
 				// subtract the margins to line up with the chartArea if we are a full width scale
 				minSize.width = me.isFullWidth() ? me.maxWidth - me.margins.left - me.margins.right : me.maxWidth;
 			} else {
-				if(tickOpts.display) minSize.width = display ? tickMarkLength : 0;
+				if(tickOpts.display) minSize.width = display ? (tickOpts.noPad == true ? 2 : tickMarkLength) : 0;
 			}
 
 			// height
@@ -478,9 +479,11 @@ module.exports = function(Chart) {
 				0);
 		},
 
+		drawcnt: 0,
 		// Actualy draw the scale on the canvas
 		// @param {rectangle} chartArea : the area of the chart to draw full grid lines on
 		draw: function(chartArea) {
+			console.log("draw()",++this.drawcnt);
 			var me = this;
 			var options = me.options;
 			if (!options.display) {
@@ -563,6 +566,13 @@ module.exports = function(Chart) {
 			var yTickStart = options.position === "bottom" ? me.top : me.bottom - tl;
 			var yTickEnd = options.position === "bottom" ? me.top + tl : me.bottom;
 
+			var lastX = -10000;
+			var lastTickLabelWidth = 0;
+			var lastLabelPosition = 0;
+
+			context.save();
+			context.font = tickLabelFont;
+
 			helpers.each(me.ticks, function(label, index) {
 				// If the callback returned a null or undefined value, do not draw this line
 				if (label === undefined || label === null) {
@@ -643,7 +653,7 @@ module.exports = function(Chart) {
 					if(optionTicks.paddingVertical>0 && optionTicks.showUnderAxis==false && labelY>me.height) label = "";
 				}
 
-				itemsToDraw.push({
+				var o = {
 					tx1: tx1,
 					ty1: ty1,
 					tx2: tx2,
@@ -661,9 +671,47 @@ module.exports = function(Chart) {
 					rotation: -1 * labelRotationRadians,
 					label: label,
 					textBaseline: textBaseline,
-					textAlign: textAlign
-				});
+					textAlign: textAlign,
+					labelWidth: context.measureText(label).width + 5
+			};
+
+				if(isHorizontal) {
+					if(!isLastTick) {
+						if (lastX + lastTickLabelWidth < o.x1) {
+							lastTickLabelWidth = o.labelWidth + 5;
+							lastX = o.x1;
+						} else {
+							o.label = "";
+						}
+					}
+				}
+
+				//Reverse label remove
+				itemsToDraw.push(o);
+
 			});
+
+			if(itemsToDraw.length>2 && isHorizontal) {
+				var x = itemsToDraw.length-1;
+				var lp = itemsToDraw[x];
+				// console.log("Poloha: ",lp);
+				while (true) {
+					x--;
+					if (x < 0) break;
+					// console.log("Porovnavam s ",itemsToDraw[x].x1 ,itemsToDraw[x].labelWidth ,itemsToDraw[x].x1 + itemsToDraw[x].labelWidth + 20);
+					if (itemsToDraw[x].x1 + itemsToDraw[x].labelWidth + 5 > lp.x1){
+						itemsToDraw[x].label = "";
+					} else {
+						break;
+					}
+				}
+
+				//Set last tick textAlign to center if not at full right
+				if(lp.x1 +  lp.labelWidth < me.right){
+					lp.textAlign = 'center';
+				}
+			}
+			context.restore();
 
 			// Draw all of the tick labels, tick marks, and grid lines at the correct places
 			helpers.each(itemsToDraw, function(itemToDraw) {
