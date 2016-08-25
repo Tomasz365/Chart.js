@@ -50,6 +50,7 @@ module.exports = function(Chart) {
 			displayFormat: false, // DEPRECATED
 			isoWeekday: false, // override week start day - see http://momentjs.com/docs/#/get-set/iso-weekday/
 			onlyUnique: false,
+			maxScaleSize: 200,
 
 			// defaults to unit's corresponding unitFormat below or override using pattern string from http://momentjs.com/docs/#/displaying/format/
 			displayFormats: {
@@ -198,11 +199,14 @@ module.exports = function(Chart) {
 				me.scaleSizeInUnits = me.lastTick.diff(me.firstTick, me.tickUnit, true);
 				me.displayFormat = me.options.time.displayFormats[me.tickUnit];
 
-				var unitDefinitionIndex = 0;
+				var unitDefinitionIndex = 1;
 				var unitDefinition = time.units[unitDefinitionIndex];
 
 				// While we aren't ideal and we don't have units left
+				// console.log("SETS!",unitDefinition.steps, me);
+
 				while (unitDefinitionIndex < time.units.length) {
+
 					// Can we scale this unit. If `false` we can scale infinitely
 					me.unitScale = 1;
 
@@ -232,6 +236,7 @@ module.exports = function(Chart) {
 						me.displayFormat = me.options.time.displayFormats[unitDefinition.name];
 					}
 				}
+				// console.log("vysledkom je: ",me.tickUnit,me.unitScale);
 			}
 
 			var roundedStart;
@@ -275,16 +280,32 @@ module.exports = function(Chart) {
 			// first tick. will have been rounded correctly if options.time.min is not specified
 			me.ticks.push(me.firstTick.clone());
 
+			// console.log("SCALE TICKS BEFORE: ", me.scaleSizeInUnits, me.tickUnit, me.unitScale, me.width);
 			// For every unit in between the first and last moment, create a moment and add it to the ticks tick
-			for (var i = 1; i <= me.scaleSizeInUnits; ++i) {
-				var newTick = roundedStart.clone().add(i, me.tickUnit);
+			var scaleRatio = 1;
+			me.widthScalledSize = me.scaleSizeInUnits;
+			if(me.scaleSizeInUnits>me.width) {
+				var mmax = me.width;
+				scaleRatio = Math.round(me.scaleSizeInUnits / mmax * 100)/100;
+				me.widthScalledSize = mmax;
+			}
+			me.widthScalledSize = me.scaleSizeInUnits;
+			// console.log("SCALE TICKS AFTER: ", me.widthScalledSize, scaleRatio);
+			for (var i = 1; i <= me.widthScalledSize; ++i) {
+				// console.log("TICK: ", i, me.scaleSizeInUnits);
+				// var y = i*scaleRatio;
+				var y = i;
+				// var newTick = roundedStart.clone().add(y, me.tickUnit).millisecond(0);
+				var newTick = roundedStart.clone().add(y, me.tickUnit);
 
 				// Are we greater than the max time
 				if (me.options.time.max && newTick.diff(me.lastTick, me.tickUnit, true) >= 0) {
 					break;
 				}
 
-				if (i % me.unitScale === 0) {
+				if (y % me.unitScale === 0) {
+					// console.log("GOTCHA!: ", i, me.scaleSizeInUnits);
+
 					if(me.options.time.onlyUnique){
 						if(me.tickFormatFunction(me.ticks[me.ticks.length-1])!=me.tickFormatFunction(newTick)) {
 							me.ticks.push(newTick);
@@ -294,6 +315,7 @@ module.exports = function(Chart) {
 					}
 				}
 			}
+			// console.log(me.ticks);
 
 			// Always show the right tick
 			var diff = me.ticks[me.ticks.length - 1].diff(me.lastTick, me.tickUnit);
