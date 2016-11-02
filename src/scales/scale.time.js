@@ -1,5 +1,5 @@
-/*global window: false */
-"use strict";
+/* global window: false */
+'use strict';
 
 var moment = require('moment');
 moment = typeof(moment) === 'function' ? moment : window.moment;
@@ -39,7 +39,7 @@ module.exports = function(Chart) {
 	};
 
 	var defaultConfig = {
-		position: "bottom",
+		position: 'bottom',
 
 		time: {
 			parser: false, // false == a pattern string from http://momentjs.com/docs/#/parsing/string-format/ or a custom callback that converts its argument to a moment
@@ -51,18 +51,19 @@ module.exports = function(Chart) {
 			isoWeekday: false, // override week start day - see http://momentjs.com/docs/#/get-set/iso-weekday/
 			onlyUnique: false,
 			maxScaleSize: 200,
+			minUnit: 'millisecond',
 
 			// defaults to unit's corresponding unitFormat below or override using pattern string from http://momentjs.com/docs/#/displaying/format/
 			displayFormats: {
-				'millisecond': 'h:mm:ss.SSS a', // 11:20:01.123 AM,
-				'second': 'h:mm:ss a', // 11:20:01 AM
-				'minute': 'h:mm:ss a', // 11:20:01 AM
-				'hour': 'MMM D, hA', // Sept 4, 5PM
-				'day': 'll', // Sep 4 2015
-				'week': 'll', // Week 46, or maybe "[W]WW - YYYY" ?
-				'month': 'MMM YYYY', // Sept 2015
-				'quarter': '[Q]Q - YYYY', // Q3
-				'year': 'YYYY' // 2015
+				millisecond: 'h:mm:ss.SSS a', // 11:20:01.123 AM,
+				second: 'h:mm:ss a', // 11:20:01 AM
+				minute: 'h:mm:ss a', // 11:20:01 AM
+				hour: 'MMM D, hA', // Sept 4, 5PM
+				day: 'll', // Sep 4 2015
+				week: 'll', // Week 46, or maybe "[W]WW - YYYY" ?
+				month: 'MMM YYYY', // Sept 2015
+				quarter: '[Q]Q - YYYY', // Q3
+				year: 'YYYY' // 2015
 			}
 		},
 		ticks: {
@@ -79,8 +80,28 @@ module.exports = function(Chart) {
 			Chart.Scale.prototype.initialize.call(this);
 		},
 		getLabelMoment: function(datasetIndex, index) {
-			if (typeof this.labelMoments[datasetIndex] != 'undefined') {
+			if (datasetIndex === null || index === null) {
+				return null;
+			}
+
+			if (typeof this.labelMoments[datasetIndex] !== 'undefined') {
 				return this.labelMoments[datasetIndex][index];
+			}
+
+			return null;
+		},
+		getLabelDiff: function(datasetIndex, index) {
+			var me = this;
+			if (datasetIndex === null || index === null) {
+				return null;
+			}
+
+			if (me.labelDiffs === undefined) {
+				me.buildLabelDiffs();
+			}
+
+			if (typeof me.labelDiffs[datasetIndex] !== 'undefined') {
+				return me.labelDiffs[datasetIndex][index];
 			}
 
 			return null;
@@ -90,9 +111,10 @@ module.exports = function(Chart) {
 			var unit = me.options.time.roundExtremes;
 			if (unit === 'week' && me.options.time.isoWeekday !== false) {
 				return tick.clone().startOf('isoWeek').isoWeekday(me.options.time.isoWeekday);
-			} else {
-				return tick.clone().startOf(unit);
+			// } else {
+			// 	return tick.clone().startOf(unit);
 			}
+			return tick.clone().startOf(me.tickUnit);
 		},
 		determineDataLimits: function() {
 			var me = this;
@@ -162,6 +184,46 @@ module.exports = function(Chart) {
 			me.firstTick = (me.firstTick || moment()).clone();
 			me.lastTick = (me.lastTick || moment()).clone();
 		},
+		buildLabelDiffs: function() {
+			var me = this;
+			me.labelDiffs = [];
+			var scaleLabelDiffs = [];
+			// Parse common labels once
+			if (me.chart.data.labels && me.chart.data.labels.length > 0) {
+				helpers.each(me.chart.data.labels, function(label) {
+					var labelMoment = me.parseTime(label);
+
+					if (labelMoment.isValid()) {
+						if (me.options.time.round) {
+							labelMoment.startOf(me.options.time.round);
+						}
+						scaleLabelDiffs.push(labelMoment.diff(me.firstTick, me.tickUnit, true));
+					}
+				}, me);
+			}
+
+			helpers.each(me.chart.data.datasets, function(dataset) {
+				var diffsForDataset = [];
+
+				if (typeof dataset.data[0] === 'object' && dataset.data[0] !== null) {
+					helpers.each(dataset.data, function(value) {
+						var labelMoment = me.parseTime(me.getRightValue(value));
+
+						if (labelMoment.isValid()) {
+							if (me.options.time.round) {
+								labelMoment.startOf(me.options.time.round);
+							}
+							diffsForDataset.push(labelMoment.diff(me.firstTick, me.tickUnit, true));
+						}
+					}, me);
+				} else {
+					// We have no labels. Use common ones
+					diffsForDataset = scaleLabelDiffs;
+				}
+
+				me.labelDiffs.push(diffsForDataset);
+			}, me);
+		},
 		buildTicks: function() {
 			var me = this;
 
@@ -195,7 +257,7 @@ module.exports = function(Chart) {
 				var labelCapacity = innerWidth / (tickLabelWidth);
 
 				// Start as small as possible
-				me.tickUnit = 'millisecond';
+				me.tickUnit = me.options.time.minUnit;
 				me.scaleSizeInUnits = me.lastTick.diff(me.firstTick, me.tickUnit, true);
 				me.displayFormat = me.options.time.displayFormats[me.tickUnit];
 
@@ -211,7 +273,7 @@ module.exports = function(Chart) {
 					me.unitScale = 1;
 
 					if (helpers.isArray(unitDefinition.steps) && Math.ceil(me.scaleSizeInUnits / labelCapacity) < helpers.max(unitDefinition.steps)) {
-						// Use one of the prefedined steps
+						// Use one of the predefined steps
 						for (var idx = 0; idx < unitDefinition.steps.length; ++idx) {
 							if (unitDefinition.steps[idx] >= Math.ceil(me.scaleSizeInUnits / labelCapacity)) {
 								me.unitScale = helpers.getValueOrDefault(me.options.time.unitStepSize, unitDefinition.steps[idx]);
@@ -263,14 +325,6 @@ module.exports = function(Chart) {
 
 				me.scaleSizeInUnits = me.lastTick.diff(me.firstTick, me.tickUnit, true);
 			}
-
-			me.smallestLabelSeparation = me.width;
-
-			helpers.each(me.chart.data.datasets, function(dataset, datasetIndex) {
-				for (var i = 1; i < me.labelMoments[datasetIndex].length; i++) {
-					me.smallestLabelSeparation = Math.min(me.smallestLabelSeparation, me.labelMoments[datasetIndex][i].diff(me.labelMoments[datasetIndex][i - 1], me.tickUnit, true));
-				}
-			}, me);
 
 			// Tick displayFormat override
 			if (me.options.time.displayFormat) {
@@ -341,6 +395,9 @@ module.exports = function(Chart) {
 			}
 // console.log("TICKS ",me.ticks.length,me.ticks)
 			me.ctx.restore();
+
+			// Invalidate label diffs cache
+			me.labelDiffs = undefined;
 		},
 		// Get tooltip label
 		getLabelForIndex: function(index, datasetIndex) {
@@ -378,9 +435,8 @@ module.exports = function(Chart) {
 
 			if (callback) {
 				return callback(formattedTick, index, ticks);
-			} else {
-				return formattedTick;
 			}
+			return formattedTick;
 		},
 		convertTicksToLabels: function() {
 			var me = this;
@@ -389,15 +445,22 @@ module.exports = function(Chart) {
 		},
 		getPixelForValue: function(value, index, datasetIndex) {
 			var me = this;
-			if (!value || !value.isValid) {
-				// not already a moment object
-				value = moment(me.getRightValue(value));
+			var offset = null;
+			if (index !== undefined && datasetIndex !== undefined) {
+				offset = me.getLabelDiff(datasetIndex, index);
 			}
-			var labelMoment = value && value.isValid && value.isValid() ? value : me.getLabelMoment(datasetIndex, index);
 
-			if (labelMoment) {
-				var offset = labelMoment.diff(me.firstTick, me.tickUnit, true);
+			if (offset === null) {
+				if (!value || !value.isValid) {
+					// not already a moment object
+					value = me.parseTime(me.getRightValue(value));
+				}
+				if (value && value.isValid && value.isValid()) {
+					offset = value.diff(me.firstTick, me.tickUnit, true);
+				}
+			}
 
+			if (offset !== null) {
 				var decimal = offset !== 0 ? offset / me.scaleSizeInUnits : offset;
 
 				if (me.isHorizontal()) {
@@ -405,12 +468,11 @@ module.exports = function(Chart) {
 					var valueOffset = (innerWidth * decimal) + me.paddingLeft;
 
 					return me.left + Math.round(valueOffset);
-				} else {
-					var innerHeight = me.height - (me.paddingTop + me.paddingBottom);
-					var heightOffset = (innerHeight * decimal) + me.paddingTop;
-
-					return me.top + Math.round(heightOffset);
 				}
+				var innerHeight = me.height - (me.paddingTop + me.paddingBottom);
+				var heightOffset = (innerHeight * decimal) + me.paddingTop;
+
+				return me.top + Math.round(heightOffset);
 			}
 		},
 		getPixelForTick: function(index) {
@@ -441,13 +503,13 @@ module.exports = function(Chart) {
 			}
 			// Custom parsing (return an instance of moment)
 			if (typeof me.options.time.format !== 'string' && me.options.time.format.call) {
-				console.warn("options.time.format is deprecated and replaced by options.time.parser. See http://nnnick.github.io/Chart.js/docs-v2/#scales-time-scale");
+				console.warn('options.time.format is deprecated and replaced by options.time.parser. See http://nnnick.github.io/Chart.js/docs-v2/#scales-time-scale');
 				return me.options.time.format(label);
 			}
 			// Moment format parsing
 			return moment(label, me.options.time.format);
 		}
 	});
-	Chart.scaleService.registerScaleType("time", TimeScale, defaultConfig);
+	Chart.scaleService.registerScaleType('time', TimeScale, defaultConfig);
 
 };
