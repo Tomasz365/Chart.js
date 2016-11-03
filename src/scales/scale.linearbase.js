@@ -63,10 +63,12 @@ module.exports = function(Chart) {
 			maxTicks = Math.max(2, maxTicks);
 
 			var numericGeneratorOptions = {
+				forceTicksCount: tickOpts.forceTicksCount,
 				maxTicks: maxTicks,
 				min: tickOpts.min,
 				max: tickOpts.max,
-				stepSize: helpers.getValueOrDefault(tickOpts.fixedStepSize, tickOpts.stepSize)
+				stepSize: helpers.getValueOrDefault(tickOpts.fixedStepSize, tickOpts.stepSize),
+				hardLimit: tickOpts.hardLimit
 			};
 			var ticks = me.ticks = Chart.Ticks.generators.linear(numericGeneratorOptions, me);
 

@@ -48,6 +48,8 @@ module.exports = function(Chart) {
 			autoSkip: true,
 			autoSkipPadding: 0,
 			labelOffset: 0,
+			padFirstTick: null,
+			padLastTick: null,
 			// We pass through arrays to be rendered as multiline labels, we convert Others to strings here.
 			callback: Chart.Ticks.formatters.values
 		}
@@ -292,7 +294,7 @@ module.exports = function(Chart) {
 				minSize.width = me.isFullWidth() ? me.maxWidth - me.margins.left - me.margins.right : me.maxWidth;
 			} else {
 				if(tickOpts.display) minSize.width = display ? (tickOpts.noPad == true ? 2 : tickMarkLength) : 0;
-				minSize.width = display && gridLineOpts.drawTicks ? tickMarkLength : 0;
+				minSize.width = display && gridLineOpts.drawTicks?2:0; //display && gridLineOpts.drawTicks ? tickMarkLength : 0; //Nehc je tam padding aspon 2 px
 			}
 
 			// height
@@ -497,9 +499,16 @@ module.exports = function(Chart) {
 
 			// figure out the maximum number of gridlines to show
 			var maxTicks;
+			var forceTicksCount;
 			if (optionTicks.maxTicksLimit) {
 				maxTicks = optionTicks.maxTicksLimit;
 			}
+
+			if (optionTicks.forceTicksCount) {
+				forceTicksCount = optionTicks.forceTicksCount;
+			}
+
+			var hardLimit = helpers.getValueOrDefault(optionTicks.hardLimit, false);
 
 			var tickFontColor = helpers.getValueOrDefault(optionTicks.fontColor, globalDefaults.defaultFontColor);
 			var tickFontSize = helpers.getValueOrDefault(optionTicks.fontSize, globalDefaults.defaultFontSize);
@@ -574,7 +583,7 @@ module.exports = function(Chart) {
 				}
 
 				var isLastTick = me.ticks.length === index + 1;
-				var isFistTick = index==0;
+				var isFirstTick = index==0;
 
 				// Since we always show the last tick,we need may need to hide the last shown one before
 				var shouldSkip = (skipRatio > 1 && index % skipRatio > 0) || (index % skipRatio === 0 && index + skipRatio >= me.ticks.length);
@@ -608,12 +617,19 @@ module.exports = function(Chart) {
 					labelX = me.getPixelForTick(index, gridLines.offsetGridLines) + optionTicks.labelOffset; // x values for optionTicks (need to consider offsetLabel option)
 					labelY = (isRotated) ? me.top + 12 : options.position === 'top' ? me.bottom - tl : me.top + tl;
 
+					if(isLastTick && optionTicks.padLastTick){
+						labelX -= optionTicks.padLastTick;
+					}
+					if(isFirstTick && optionTicks.padFirstTick){
+						labelX += optionTicks.padFirstTick;
+					}
+
 					tx1 = tx2 = x1 = x2 = xLineValue;
 					ty1 = yTickStart;
 					ty2 = yTickEnd;
 					y1 = chartArea.top;
 					y2 = chartArea.bottom;
-					if(isFistTick) textAlign = 'left';
+					if(isFirstTick) textAlign = 'left';
 					else if(isLastTick) textAlign = 'right';
 				} else {
 					if (options.position === 'left') {

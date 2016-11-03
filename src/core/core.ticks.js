@@ -54,6 +54,30 @@ module.exports = function(Chart) {
 				// To get a "nice" value for the tick spacing, we will use the appropriately named
 				// "nice number" algorithm. See http://stackoverflow.com/questions/8506881/nice-label-algorithm-for-charts-with-minimum-ticks
 				// for details.
+				if(typeof generationOptions.forceTicksCount!='undefined'){
+
+					var min = (generationOptions.min !== undefined ? generationOptions.min : dataRange.min);
+					var max = (generationOptions.max !== undefined ? generationOptions.max : dataRange.max);
+					if(generationOptions.hardLimit){
+						var step = (max - min) / generationOptions.forceTicksCount;
+					} else {
+						var step = helpers.niceNum((max - min) / generationOptions.forceTicksCount, true);
+					}
+
+
+					min = Math.floor(min / step) * step;
+					max = Math.ceil(max / step) * step;
+
+					step = (max - min) / generationOptions.forceTicksCount;
+
+					// ticks.push(generationOptions.min !== undefined ? generationOptions.min : min);
+					for (var j = 0; j < generationOptions.forceTicksCount+1; j++) {
+						var val = min + (j * step);
+						ticks.push(min + (j * step));
+					}
+					// ticks.push(generationOptions.max !== undefined ? generationOptions.max : max);
+					return ticks;
+				}
 
 				var spacing;
 				if (generationOptions.stepSize && generationOptions.stepSize > 0) {

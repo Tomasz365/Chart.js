@@ -274,7 +274,7 @@ module.exports = function(Chart) {
 			// var newHeight = (me.options.maintainAspectRatio && isNaN(aspectRatio) === false && isFinite(aspectRatio) && aspectRatio !== 0) ? newWidth / aspectRatio : helpers.getMaximumHeight(canvas);
 			// newHeight = helpers.getMaximumHeight(canvas);
 
-			var aspectRatio = (options.maintainAspectRatio && chart.aspectRatio) || null;
+			var aspectRatio = null; //(options.maintainAspectRatio && chart.aspectRatio) || null;
 
 			// the canvas render width and height will be casted to integers so make sure that
 			// the canvas display style uses the same integer values to avoid blurring effect.
