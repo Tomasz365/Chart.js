@@ -115,6 +115,7 @@ module.exports = function(Chart) {
 			// 	return tick.clone().startOf(unit);
 			}
 			return tick.clone().startOf(me.tickUnit);
+			return tick.clone().startOf(unit);
 		},
 		determineDataLimits: function() {
 			var me = this;
@@ -305,7 +306,7 @@ module.exports = function(Chart) {
 			var uniqueTicks = [];
 
 			// Only round the first tick if we have no hard minimum
-			if (!me.options.time.min) {
+			if (!me.options.time.min && 1==0) {
 				me.firstTick = me.getMomentStartOf(me.firstTick);
 				roundedStart = me.firstTick;
 			} else {
@@ -313,7 +314,7 @@ module.exports = function(Chart) {
 			}
 
 			// Only round the last tick if we have no hard maximum
-			if (!me.options.time.max) {
+			if (!me.options.time.max && 1==0) {
 				var roundedEnd = me.getMomentStartOf(me.lastTick);
 				var delta = roundedEnd.diff(me.lastTick, me.tickUnit, true);
 				if (delta < 0) {
