@@ -180,7 +180,7 @@ module.exports = function(Chart) {
 			if (me.options.time.max) {
 				me.lastTick = me.parseTime(me.options.time.max);
 			}
-
+// console.log("DETERMINED LAST TICK:",me.lastTick);
 			// We will modify these, so clone for later
 			me.firstTick = (me.firstTick || moment()).clone();
 			me.lastTick = (me.lastTick || moment()).clone();
@@ -226,6 +226,7 @@ module.exports = function(Chart) {
 			}, me);
 		},
 		buildTicks: function() {
+			// console.error("BuildTicks");
 			var me = this;
 
 			me.ctx.save();
@@ -238,7 +239,7 @@ module.exports = function(Chart) {
 			me.ticks = [];
 			me.unitScale = 1; // How much we scale the unit by, ie 2 means 2x unit per step
 			me.scaleSizeInUnits = 0; // How large the scale is in the base unit (seconds, minutes, etc)
-
+// me.options.time.unit = 'second';
 			// Set unit override if applicable
 			if (me.options.time.unit) {
 				me.tickUnit = me.options.time.unit || 'day';
@@ -293,8 +294,8 @@ module.exports = function(Chart) {
 						unitDefinition = time.units[unitDefinitionIndex];
 
 						me.tickUnit = unitDefinition.name;
-						var leadingUnitBuffer = me.firstTick.diff(me.getMomentStartOf(me.firstTick), me.tickUnit, true);
-						var trailingUnitBuffer = me.getMomentStartOf(me.lastTick.clone().add(1, me.tickUnit)).diff(me.lastTick, me.tickUnit, true);
+						var leadingUnitBuffer = 0;//me.firstTick.diff(me.getMomentStartOf(me.firstTick), me.tickUnit, true);
+						var trailingUnitBuffer = 0;//me.getMomentStartOf(me.lastTick.clone().add(1, me.tickUnit)).diff(me.lastTick, me.tickUnit, true);
 						me.scaleSizeInUnits = me.lastTick.diff(me.firstTick, me.tickUnit, true) + leadingUnitBuffer + trailingUnitBuffer;
 						me.displayFormat = me.options.time.displayFormats[unitDefinition.name];
 					}
@@ -347,11 +348,11 @@ module.exports = function(Chart) {
 			me.widthScalledSize = me.scaleSizeInUnits;
 			// console.log("SCALE TICKS AFTER: ", me.widthScalledSize, scaleRatio);
 			for (var i = 1; i <= me.widthScalledSize; ++i) {
-				// console.log("TICK: ", i, me.scaleSizeInUnits);
 				// var y = i*scaleRatio;
 				var y = i;
 				// var newTick = roundedStart.clone().add(y, me.tickUnit).millisecond(0);
 				var newTick = roundedStart.clone().add(y, me.tickUnit);
+				// console.log("TICK: ", i, me.scaleSizeInUnits, newTick.format(), me.lastTick.format());
 
 				// Are we greater than the max time
 				if (me.options.time.max && newTick.diff(me.lastTick, me.tickUnit, true) >= 0) {
@@ -460,6 +461,7 @@ module.exports = function(Chart) {
 					offset = value.diff(me.firstTick, me.tickUnit, true);
 				}
 			}
+			// console.error("getPixelForValue()", offset);
 
 			if (offset !== null) {
 				var decimal = offset !== 0 ? offset / me.scaleSizeInUnits : offset;
@@ -467,6 +469,7 @@ module.exports = function(Chart) {
 				if (me.isHorizontal()) {
 					var innerWidth = me.width - (me.paddingLeft + me.paddingRight);
 					var valueOffset = (innerWidth * decimal) + me.paddingLeft;
+					// console.error("getPixelForValue()", value, index, datasetIndex, decimal, offset, me.scaleSizeInUnits, innerWidth, valueOffset, me.left);
 
 					return me.left + Math.round(valueOffset);
 				}

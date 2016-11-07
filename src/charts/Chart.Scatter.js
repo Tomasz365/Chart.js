@@ -27,7 +27,7 @@ module.exports = function(Chart) {
 					return '';
 				},
 				label: function(tooltipItem) {
-					return '(' + tooltipItem.xLabel + ', ' + tooltipItem.yLabel + ')';
+					return '(' + tooltipItem.xLabel.format("DD.MM.YYYY HH:mm:ss") + ', ' + tooltipItem.yLabel + ')';
 				}
 			}
 		}

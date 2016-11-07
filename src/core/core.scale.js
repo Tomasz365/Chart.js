@@ -480,7 +480,6 @@ module.exports = function(Chart) {
 		// Actually draw the scale on the canvas
 		// @param {rectangle} chartArea : the area of the chart to draw full grid lines on
 		draw: function(chartArea) {
-			// console.log("draw()",++this.drawcnt);
 			var me = this;
 			var options = me.options;
 			if (!options.display) {
@@ -530,6 +529,9 @@ module.exports = function(Chart) {
 			var cosRotation = Math.cos(labelRotationRadians);
 			var longestRotatedLabel = me.longestLabelWidth * cosRotation;
 
+			var disableLastElementSkip = helpers.getValueOrDefault(optionTicks.disableLastElementSkip, true);
+			var skipLastElementFurtherThan = helpers.getValueOrDefault(optionTicks.skipLastElementFurtherThan, null);
+
 			// Make sure we draw text in the correct color and font
 			context.fillStyle = tickFontColor;
 
@@ -577,6 +579,7 @@ module.exports = function(Chart) {
 			context.save();
 			context.font = tickLabelFont;
 
+			// console.warn("Drawing ticks", me.ticks, me.min, me.max);
 			helpers.each(me.ticks, function(label, index) {
 				var isLastTick = me.ticks.length === index + 1;
 				var isFirstTick = index==0;
@@ -588,7 +591,8 @@ module.exports = function(Chart) {
 
 
 				// Since we always show the last tick,we need may need to hide the last shown one before
-				var shouldSkip = (skipRatio > 1 && index % skipRatio > 0) || (index % skipRatio === 0 && index + skipRatio >= me.ticks.length);
+				var shouldSkip = (skipRatio > 1 && index % skipRatio > 0) || (!disableLastElementSkip && index % skipRatio === 0 && index + skipRatio >= me.ticks.length);
+				// console.log(label, skipRatio, index, shouldSkip);
 				if (shouldSkip && !isLastTick || (label === undefined || label === null)) {
 					return;
 				}
@@ -633,6 +637,9 @@ module.exports = function(Chart) {
 					y2 = chartArea.bottom;
 					if(isFirstTick) textAlign = 'left';
 					else if(isLastTick) textAlign = 'right';
+					if(skipLastElementFurtherThan && tx1+skipLastElementFurtherThan>me.width){
+						return;
+					}
 				} else {
 					if (options.position === 'left') {
 						if (optionTicks.mirror) {
