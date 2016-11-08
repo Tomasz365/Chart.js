@@ -20,7 +20,7 @@ module.exports = function(Chart) {
 			meta = chart.getDatasetMeta(i);
 			for (j = 0, jlen = meta.data.length; j < jlen; ++j) {
 				var element = meta.data[j];
-				if (!element || !element._view || !element._view.skip) {
+				if (element && element._view && !element._view.skip) {
 					handler(element);
 				}
 			}
