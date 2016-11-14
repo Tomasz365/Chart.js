@@ -40,7 +40,6 @@ module.exports = function(Chart) {
 
 	var defaultConfig = {
 		position: 'bottom',
-
 		time: {
 			parser: false, // false == a pattern string from http://momentjs.com/docs/#/parsing/string-format/ or a custom callback that converts its argument to a moment
 			format: false, // DEPRECATED false == date objects, moment object, callback or a pattern string from http://momentjs.com/docs/#/parsing/string-format/
@@ -52,6 +51,7 @@ module.exports = function(Chart) {
 			onlyUnique: false,
 			maxScaleSize: 200,
 			minUnit: 'millisecond',
+			formatFunction: null,
 
 			// defaults to unit's corresponding unitFormat below or override using pattern string from http://momentjs.com/docs/#/displaying/format/
 			displayFormats: {
@@ -225,16 +225,24 @@ module.exports = function(Chart) {
 				me.labelDiffs.push(diffsForDataset);
 			}, me);
 		},
+
+		getFontSize: function(){
+			return helpers.getValueOrDefault(this.options.ticks.fontSize, Chart.defaults.global.defaultFontSize);
+		},
+
+		getFont: function(){
+			var tickFontSize = this.getFontSize();
+			var tickFontStyle = helpers.getValueOrDefault(this.options.ticks.fontStyle, Chart.defaults.global.defaultFontStyle);
+			var tickFontFamily = helpers.getValueOrDefault(this.options.ticks.fontFamily, Chart.defaults.global.defaultFontFamily);
+			return helpers.fontString(tickFontSize, tickFontStyle, tickFontFamily);
+		},
+
 		buildTicks: function() {
 			// console.error("BuildTicks");
 			var me = this;
 
 			me.ctx.save();
-			var tickFontSize = helpers.getValueOrDefault(me.options.ticks.fontSize, Chart.defaults.global.defaultFontSize);
-			var tickFontStyle = helpers.getValueOrDefault(me.options.ticks.fontStyle, Chart.defaults.global.defaultFontStyle);
-			var tickFontFamily = helpers.getValueOrDefault(me.options.ticks.fontFamily, Chart.defaults.global.defaultFontFamily);
-			var tickLabelFont = helpers.fontString(tickFontSize, tickFontStyle, tickFontFamily);
-			me.ctx.font = tickLabelFont;
+			me.ctx.font = this.getFont();
 
 			me.ticks = [];
 			me.unitScale = 1; // How much we scale the unit by, ie 2 means 2x unit per step
@@ -255,7 +263,7 @@ module.exports = function(Chart) {
 				var tickLabelWidth = me.ctx.measureText(tempFirstLabel).width;
 				var cosRotation = Math.cos(helpers.toRadians(me.options.ticks.maxRotation));
 				var sinRotation = Math.sin(helpers.toRadians(me.options.ticks.maxRotation));
-				tickLabelWidth = (tickLabelWidth * cosRotation) + (tickFontSize * sinRotation);
+				tickLabelWidth = (tickLabelWidth * cosRotation) + (this.getFontSize() * sinRotation);
 				var labelCapacity = innerWidth / (tickLabelWidth);
 
 				// Start as small as possible
@@ -303,6 +311,16 @@ module.exports = function(Chart) {
 				// console.log("vysledkom je: ",me.tickUnit,me.unitScale);
 			}
 
+			if(this.options.ticks.useBaraniGenerator){
+				this.generateTicksBarani();
+			} else this.generateTicks();
+			me.ctx.restore();
+
+
+		},
+
+		generateTicks: function(){
+			var me = this;
 			var roundedStart;
 			var uniqueTicks = [];
 
@@ -396,11 +414,154 @@ module.exports = function(Chart) {
 				}
 			}
 // console.log("TICKS ",me.ticks.length,me.ticks)
-			me.ctx.restore();
 
 			// Invalidate label diffs cache
 			me.labelDiffs = undefined;
 		},
+
+
+		generateTicksBarani: function(){
+			var me = this;
+			var roundedStart;
+			var uniqueTicks = [];
+			var countOfTicks = 4;
+			me.options.customTicksDrawer = me.drawTicksBarani.bind(me);
+
+			roundedStart = me.getMomentStartOf(me.firstTick);
+
+			if (me.options.time.displayFormat) {
+				me.displayFormat = me.options.time.displayFormat;
+			}
+
+
+
+			// first tick. will have been rounded correctly if options.time.min is not specified
+			// me.ticks.push(me.firstTick.clone());
+			var diff = Math.round(me.lastTick.diff(me.firstTick)/1000);
+
+			var now = me.options.time.timeNow || moment();
+			var isNowInChart = false;
+			var leftAlign = true;
+			if(me.firstTick.valueOf() <= now.valueOf() && me.lastTick >= now.valueOf()){
+				me.ticks.push(moment());
+				isNowInChart = true;
+				leftAlign = Math.abs(moment().diff(me.firstTick)) > Math.abs(moment().diff(me.lastTick));
+			} else {
+				if(me.firstTick.valueOf()>=now.valueOf()) leftAlign = true;
+				else if(me.lastTick.valueOf() <= now.valueOf()) leftAlign = false;
+			}
+
+
+			if(diff==0) return;
+
+			var ticksInterval = diff/(countOfTicks);
+
+			if(diff>=4*86400){
+				//Daily interval
+				//Hourly interval
+				ticksInterval = Math.floor(diff/(countOfTicks)/86400)*86400;
+			} else if( diff > 4 * 3600){
+				ticksInterval = Math.floor(diff/(countOfTicks)/3600)*3600;
+			} else {
+				//Mins internval
+				ticksInterval = Math.floor(diff/(countOfTicks)/60)*60;
+			}
+// console.log("VYPOCITANY INTERVAL", me);
+			var i = 0;
+			if(isNowInChart){
+				while(true){
+					i++;
+					var tick1 = moment(now).subtract(ticksInterval*i,'seconds');
+					var tick2 = moment(now).add(ticksInterval*i,'seconds');
+					// console.log(tick1.valueOf(),tick2.valueOf(),me.firstTick.valueOf(),me.lastTick.valueOf(),tick1.valueOf()>=me.firstTick.valueOf(), tick2.valueOf()<=me.lastTick.valueOf());
+					if(tick1.valueOf()>=me.firstTick.valueOf() || tick2.valueOf()<=me.lastTick.valueOf()){
+						if(tick1.valueOf()>=me.firstTick.valueOf()) me.ticks.push(tick1);
+						if(tick2.valueOf()<=me.lastTick.valueOf()) me.ticks.push(tick2);
+					} else {
+						break;
+					}
+				}
+			} else {
+				while(true){
+					i++;
+					if(leftAlign) {
+						var tick = moment(me.firstTick).add(ticksInterval * i, 'seconds');
+					} else {
+						var tick = moment(me.lastTick).subtract(ticksInterval * i, 'seconds');
+					}
+					if(tick.valueOf()>=me.firstTick.valueOf() && tick.valueOf()<=me.lastTick.valueOf()){
+						me.ticks.push(tick);
+					} else {
+						break;
+					}
+				}
+			}
+
+			/*var ticksInterval = diff/(countOfTicks+1);
+			for(var i = 1; i <= countOfTicks; i++){
+				var tick = moment(me.firstTick).add(ticksInterval*i,'milliseconds');
+				console.log(tick);
+				me.ticks.push(tick);
+			}*/
+
+			if(me.options.time.showDays) {
+				//Zvyraznit dni pokial je to menej ako 12 dni
+				// console.log((diff > 86400 || me.firstTick.date() != me.lastTick.date()), diff < 12 * 86400);
+				if ((diff > 86400 || me.firstTick.date() != me.lastTick.date()) && diff < 12 * 86400) {
+					var ft = moment(me.firstTick);
+					while (true) {
+						ft.endOf('day').add(1, 'second');
+						if (ft.valueOf() < me.lastTick.valueOf()) {
+							var t = ft.clone();
+							t.special = true;
+							me.ticks.push(t);
+						} else {
+							break;
+						}
+					}
+				}
+			}
+
+			me.ticks.sort(function(a,b) {
+				return a.valueOf() - b.valueOf();
+			})
+
+			// me.ticks.push(me.lastTick.clone());
+			me.labelDiffs = undefined;
+
+
+
+
+		},
+
+		drawTicksBarani: function(label, index, toDraw){
+			var me = this;
+			var options = me.options;
+			var gridLines = options.gridLines;
+
+			if(typeof this.tickMoments != 'undefined') {
+				var obj = this.tickMoments[index];
+				if (typeof obj.special != 'undefined') {
+					// console.log("TOTO JE SPECIAL!", label, index, toDraw);
+					toDraw.label = "";
+					toDraw.glWidth = 1;
+					toDraw.glColor = "#000000";
+					toDraw.glBorderDash = [2,4];
+					// toDraw.glBorderDashOffset = 2;
+					if(gridLines.drawTicks){
+						toDraw.ty2 = toDraw.ty2 - gridLines.tickMarkLength
+					}
+				} else if(toDraw.label == "0"){
+					toDraw.glWidth = 1;
+					toDraw.glColor = "#000000";
+
+				} else if(toDraw.textAlign=="left" && (toDraw.x1+15 > me.left)){
+					// console.log(toDraw.label, toDraw.x1, me.left);
+					toDraw.textAlign = "center";
+				}
+			}
+		},
+
 		// Get tooltip label
 		getLabelForIndex: function(index, datasetIndex) {
 			var me = this;
@@ -423,6 +584,8 @@ module.exports = function(Chart) {
 
 		// Function to format an individual tick mark
 		tickFormatFunction: function(tick, index, ticks) {
+			if(this.options.time.formatFunction!=null) return this.options.time.formatFunction(tick,index,ticks);
+
 			if(this.tickFormatCache[tick.valueOf() + "_" + this.displayFormat]!==undefined){
 				var formattedTick = this.tickFormatCache[tick.valueOf() + "_" + this.displayFormat];
 			} else {
@@ -433,6 +596,7 @@ module.exports = function(Chart) {
 				formattedTick = formattedTick.split("\n");
 			}
 			var tickOpts = this.options.ticks;
+
 			var callback = helpers.getValueOrDefault(tickOpts.callback, tickOpts.userCallback);
 
 			if (callback) {
@@ -440,6 +604,7 @@ module.exports = function(Chart) {
 			}
 			return formattedTick;
 		},
+
 		convertTicksToLabels: function() {
 			var me = this;
 			me.tickMoments = me.ticks;

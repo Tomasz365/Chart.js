@@ -579,7 +579,7 @@ module.exports = function(Chart) {
 			context.save();
 			context.font = tickLabelFont;
 
-			// console.warn("Drawing ticks", me.ticks, me.min, me.max);
+			console.warn("Drawing ticks", me.ticks, me.min, me.max);
 			helpers.each(me.ticks, function(label, index) {
 				var isLastTick = me.ticks.length === index + 1;
 				var isFirstTick = index==0;
@@ -690,16 +690,25 @@ module.exports = function(Chart) {
 					label: label,
 					textBaseline: textBaseline,
 					textAlign: textAlign,
-					labelWidth: context.measureText(label).width + 5
-			};
+					labelWidth: (label==""?0:context.measureText(label).width + 5)
+				};
 
-				if(isHorizontal) {
-					if(!isLastTick) {
-						if (lastX + lastTickLabelWidth < o.x1) {
-							lastTickLabelWidth = o.labelWidth + 5;
-							lastX = o.x1;
-						} else {
-							o.label = "";
+
+
+
+				if(options.customTicksDrawer){
+					options.customTicksDrawer(label,index,o);
+				}
+
+				if(o.label!="") {
+					if (isHorizontal) {
+						if (!isLastTick) {
+							if (lastX + lastTickLabelWidth < o.x1) {
+								lastTickLabelWidth = o.labelWidth + 5;
+								lastX = o.x1;
+							} else {
+								o.label = "";
+							}
 						}
 					}
 				}
