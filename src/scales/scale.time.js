@@ -462,18 +462,20 @@ module.exports = function(Chart) {
 				ticksInterval = Math.floor(diff/(countOfTicks)/86400)*86400;
 			} else if( diff > 4 * 3600){
 				ticksInterval = Math.floor(diff/(countOfTicks)/3600)*3600;
-			} else {
-				//Mins internval
+			} else if(diff > 60 * countOfTicks) {
 				ticksInterval = Math.floor(diff/(countOfTicks)/60)*60;
+			} else {
+				ticksInterval = Math.floor(diff/(countOfTicks));
 			}
-// console.log("VYPOCITANY INTERVAL", me);
+			if(ticksInterval==0) ticksInterval=1;
+
 			var i = 0;
 			if(isNowInChart){
 				while(true){
 					i++;
 					var tick1 = moment(now).subtract(ticksInterval*i,'seconds');
 					var tick2 = moment(now).add(ticksInterval*i,'seconds');
-					// console.log(tick1.valueOf(),tick2.valueOf(),me.firstTick.valueOf(),me.lastTick.valueOf(),tick1.valueOf()>=me.firstTick.valueOf(), tick2.valueOf()<=me.lastTick.valueOf());
+					// console.log(ticksInterval, tick1.valueOf(),tick2.valueOf(),me.firstTick.valueOf(),me.lastTick.valueOf(),tick1.valueOf()>=me.firstTick.valueOf(), tick2.valueOf()<=me.lastTick.valueOf());
 					if(tick1.valueOf()>=me.firstTick.valueOf() || tick2.valueOf()<=me.lastTick.valueOf()){
 						if(tick1.valueOf()>=me.firstTick.valueOf()) me.ticks.push(tick1);
 						if(tick2.valueOf()<=me.lastTick.valueOf()) me.ticks.push(tick2);
@@ -528,7 +530,6 @@ module.exports = function(Chart) {
 
 			// me.ticks.push(me.lastTick.clone());
 			me.labelDiffs = undefined;
-
 
 
 

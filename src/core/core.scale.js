@@ -579,7 +579,7 @@ module.exports = function(Chart) {
 			context.save();
 			context.font = tickLabelFont;
 
-			console.warn("Drawing ticks", me.ticks, me.min, me.max);
+			// console.warn("Drawing ticks", me.ticks, me.min, me.max);
 			helpers.each(me.ticks, function(label, index) {
 				var isLastTick = me.ticks.length === index + 1;
 				var isFirstTick = index==0;
