@@ -93,7 +93,7 @@ function buildTask() {
     .pipe(streamify(concat('Chart.bundle.min.js')))
     .pipe(gulp.dest(outDir));
 
- /* var nonBundled = browserify('./src/chart.js', { standalone: 'Chart' })
+  var nonBundled = browserify('./src/chart.js', { standalone: 'Chart' })
     .ignore('moment')
     .plugin(collapse)
     .bundle()
@@ -105,9 +105,9 @@ function buildTask() {
     .pipe(insert.prepend(header))
     .pipe(streamify(replace('{{ version }}', package.version)))
     .pipe(streamify(concat('Chart.min.js')))
-    .pipe(gulp.dest(outDir));*/
+    .pipe(gulp.dest(outDir));
 
-  return merge(bundled/*, nonBundled*/);
+  return merge(bundled, nonBundled);
 
 }
 
