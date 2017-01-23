@@ -300,7 +300,7 @@ module.exports = function(Chart) {
 
 			// Draw the points
 			for (i=0, ilen=points.length; i<ilen; ++i) {
-				points[i].draw();
+				points[i].draw(me.getDataset());
 			}
 		},
 

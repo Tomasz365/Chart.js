@@ -205,7 +205,12 @@ module.exports = function(Chart) {
 			var me = this;
 			var meta = me.getMeta();
 			var yScale = me.getScaleForId(meta.yAxisID);
-			var value = Number(me.getDataset().data[index]);
+			var container = me.getDataset().data[index];
+			if(helpers.isObject(container)){
+				var value = Number(container.y.value);
+			} else {
+				var value = Number(container);
+			}
 
 			if (yScale.options.stacked) {
 
@@ -235,6 +240,7 @@ module.exports = function(Chart) {
 		},
 
 		draw: function(ease) {
+			console.log("BAR DRAW");
 			var me = this;
 			var easingDecimal = ease || 1;
 			var metaData = me.getMeta().data;
@@ -243,7 +249,7 @@ module.exports = function(Chart) {
 
 			for (i = 0, len = metaData.length; i < len; ++i) {
 				var d = dataset.data[i];
-				if (d !== null && d !== undefined && !isNaN(d)) {
+				if (d !== null && d !== undefined) {
 					metaData[i].transition(easingDecimal).draw();
 				}
 			}

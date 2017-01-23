@@ -3,10 +3,17 @@
 module.exports = function(Chart) {
 	// Global Chart canvas helpers object for drawing items to canvas
 	var helpers = Chart.canvasHelpers = {};
-
-	helpers.drawPoint = function(ctx, pointStyle, radius, x, y) {
+	/**
+	 *
+	 * @param ctx
+	 * @param pointStyle
+	 * @param radius
+	 * @param x
+	 * @param y
+	 * @param yScale - just for bar
+	 */
+	helpers.drawPoint = function(ctx, pointStyle, radius, x, y, yScale) {
 		var type, edgeLength, xOffset, yOffset, height, size;
-
 		if (typeof pointStyle === 'object') {
 			type = pointStyle.toString();
 			if (type === '[object HTMLImageElement]' || type === '[object HTMLCanvasElement]') {
@@ -96,6 +103,56 @@ module.exports = function(Chart) {
 			ctx.moveTo(x, y);
 			ctx.lineTo(x + radius, y);
 			ctx.closePath();
+			break;
+		case 'bar':
+			var halfWidth = radius / 2,
+				leftX = x - halfWidth,
+				rightX = x + halfWidth,
+				top = y,
+				halfStroke = ctx.lineWidth / 2;
+
+			// Canvas doesn't allow us to stroke inside the width so we can
+			// adjust the sizes to fit if we're setting a stroke on the line
+			if (ctx.lineWidth) {
+				leftX += halfStroke;
+				rightX -= halfStroke;
+				top += halfStroke;
+			}
+
+			ctx.beginPath();
+
+			// Corner points, from bottom-left to bottom-right clockwise
+			// | 1 2 |
+			// | 0 3 |
+			var corners = [
+				[leftX, yScale.getBasePixel()],
+				[leftX, top],
+				[rightX, top],
+				[rightX, yScale.getBasePixel()]
+			];
+
+			// Find first (starting) corner with fallback to 'bottom'
+			var borders = ['bottom', 'left', 'top', 'right'];
+			// var startCorner = borders.indexOf(vm.borderSkipped, 0);
+			// if (startCorner === -1) {
+			var startCorner = 0;
+			// }
+			if(ctx.lineWidth) ctx.borderWidth = ctx.lineWidth;
+
+			// Draw rectangle from 'startCorner'
+			var corner = corners[(startCorner + 0) % 4];
+			ctx.moveTo(corner[0], corner[1]);
+
+			for (var i = 1; i < 4; i++) {
+				corner = corners[(startCorner + i) % 4];
+				ctx.lineTo(corner[0], corner[1]);
+			}
+
+			ctx.fill();
+			if (ctx.borderWidth) {
+				ctx.stroke();
+			}
+			return;
 			break;
 		}
 

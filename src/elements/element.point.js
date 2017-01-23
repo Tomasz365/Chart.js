@@ -58,12 +58,14 @@ module.exports = function(Chart) {
 				padding: vm.radius + vm.borderWidth
 			};
 		},
-		draw: function() {
+		draw: function(dataset) {
 			var vm = this._view;
 			var ctx = this._chart.ctx;
+			var yScale = this._yScale;
 			var pointStyle = vm.pointStyle;
+
 			var radius = vm.radius;
-			var width = vm.width;
+			var width = (dataset && dataset.widthFunction?dataset.widthFunction(this._index,dataset,this._xScale.width):null) || vm.width  ;
 			var x = vm.x;
 			var y = vm.y;
 
@@ -71,11 +73,11 @@ module.exports = function(Chart) {
 				return;
 			}
 
-			ctx.strokeStyle = vm.borderColor || defaultColor;
-			ctx.lineWidth = helpers.getValueOrDefault(vm.borderWidth, globalOpts.elements.point.borderWidth);
-			ctx.fillStyle = vm.backgroundColor || defaultColor;
+			ctx.strokeStyle = (dataset?dataset.borderColor:null) || vm.borderColor || defaultColor;
+			ctx.lineWidth = (dataset?dataset.borderWidth:null) || helpers.getValueOrDefault(vm.borderWidth, globalOpts.elements.point.borderWidth);
+			ctx.fillStyle = (dataset?dataset.backgroundColor:null) || vm.backgroundColor || defaultColor;
 
-			Chart.canvasHelpers.drawPoint(ctx, pointStyle, width, x, y);
+			Chart.canvasHelpers.drawPoint(ctx, pointStyle, width, x, y, yScale);
 		}
 	});
 };
