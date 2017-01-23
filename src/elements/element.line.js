@@ -20,7 +20,6 @@ module.exports = function(Chart) {
 
 	Chart.elements.Line = Chart.Element.extend({
 		draw: function() {
-console.error("DRAW");
 			var me = this;
 			var vm = me._view;
 			var spanGaps = vm.spanGaps;
