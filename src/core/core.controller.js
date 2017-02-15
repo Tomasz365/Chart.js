@@ -684,6 +684,11 @@ module.exports = function(Chart) {
 				}
 			}
 
+			// if we scaled the canvas in response to a devicePixelRatio !== 1, we need to undo that transform here
+			if (me.chart.originalDevicePixelRatio !== undefined) {
+				me.chart.ctx.scale(1 / me.chart.originalDevicePixelRatio, 1 / me.chart.originalDevicePixelRatio);
+			}
+
 			if (canvas) {
 				helpers.unbindEvents(me, me.events);
 				helpers.removeResizeListener(canvas.parentNode);
@@ -691,11 +696,6 @@ module.exports = function(Chart) {
 				releaseCanvas(canvas);
 				me.chart.canvas = null;
 				me.chart.ctx = null;
-			}
-
-			// if we scaled the canvas in response to a devicePixelRatio !== 1, we need to undo that transform here
-			if (me.chart.originalDevicePixelRatio !== undefined) {
-				me.chart.ctx.scale(1 / me.chart.originalDevicePixelRatio, 1 / me.chart.originalDevicePixelRatio);
 			}
 
 			Chart.plugins.notify('destroy', [me]);

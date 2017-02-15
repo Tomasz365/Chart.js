@@ -25,21 +25,21 @@ var outDir = './dist/';
 var testDir = './test/';
 
 var header = "/*!\n" +
-  " * Chart.js\n" +
-  " * http://chartjs.org/\n" +
-  " * Version: {{ version }}\n" +
-  " *\n" +
-  " * Copyright 2016 Nick Downie\n" +
-  " * Released under the MIT license\n" +
-  " * https://github.com/chartjs/Chart.js/blob/master/LICENSE.md\n" +
-  " */\n";
+	" * Chart.js\n" +
+	" * http://chartjs.org/\n" +
+	" * Version: {{ version }}\n" +
+	" *\n" +
+	" * Copyright 2017 Nick Downie\n" +
+	" * Released under the MIT license\n" +
+	" * https://github.com/chartjs/Chart.js/blob/master/LICENSE.md\n" +
+	" */\n";
 
 var preTestFiles = [
-  './node_modules/moment/min/moment.min.js'
+	'./node_modules/moment/min/moment.min.js'
 ];
 
 var testFiles = [
-  './test/*.js'
+	'./test/*.js'
 ];
 
 gulp.task('bower', bowerTask);
@@ -65,177 +65,185 @@ gulp.task('default', ['build', 'watch']);
  * Specs: https://github.com/bower/spec/blob/master/json.md
  */
 function bowerTask() {
-  var json = JSON.stringify({
-      name: package.name,
-      description: package.description,
-      homepage: package.homepage,
-      license: package.license,
-      version: package.version,
-      main: outDir + "Chart.js"
-    }, null, 2);
+	var json = JSON.stringify({
+		name: package.name,
+		description: package.description,
+		homepage: package.homepage,
+		license: package.license,
+		version: package.version,
+		main: outDir + "Chart.js",
+		ignore: [
+			'.github',
+			'.codeclimate.yml',
+			'.gitignore',
+			'.npmignore',
+			'.travis.yml',
+			'scripts'
+		]
+	}, null, 2);
 
-  return file('bower.json', json, { src: true })
-    .pipe(gulp.dest('./'));
+	return file('bower.json', json, { src: true })
+		.pipe(gulp.dest('./'));
 }
 
 function buildTask() {
 
-  var bundled = browserify('./src/chart.js', { standalone: 'Chart' })
-    .plugin(collapse)
-    .bundle()
-    .pipe(source('Chart.bundle.js'))
-    .pipe(insert.prepend(header))
-    .pipe(streamify(replace('{{ version }}', package.version)))
-    .pipe(gulp.dest(outDir))
-    // .pipe(streamify(uglify()))
-    .pipe(insert.prepend(header))
-    .pipe(streamify(replace('{{ version }}', package.version)))
-    .pipe(streamify(concat('Chart.bundle.min.js')))
-    .pipe(gulp.dest(outDir));
+	var bundled = browserify('./src/chart.js', { standalone: 'Chart' })
+		.plugin(collapse)
+		.bundle()
+		.pipe(source('Chart.bundle.js'))
+		.pipe(insert.prepend(header))
+		.pipe(streamify(replace('{{ version }}', package.version)))
+		.pipe(gulp.dest(outDir))
+		.pipe(streamify(uglify()))
+		.pipe(insert.prepend(header))
+		.pipe(streamify(replace('{{ version }}', package.version)))
+		.pipe(streamify(concat('Chart.bundle.min.js')))
+		.pipe(gulp.dest(outDir));
 
-  var nonBundled = browserify('./src/chart.js', { standalone: 'Chart' })
-    .ignore('moment')
-    .plugin(collapse)
-    .bundle()
-    .pipe(source('Chart.js'))
-    .pipe(insert.prepend(header))
-    .pipe(streamify(replace('{{ version }}', package.version)))
-    .pipe(gulp.dest(outDir))
-    .pipe(streamify(uglify()))
-    .pipe(insert.prepend(header))
-    .pipe(streamify(replace('{{ version }}', package.version)))
-    .pipe(streamify(concat('Chart.min.js')))
-    .pipe(gulp.dest(outDir));
+	var nonBundled = browserify('./src/chart.js', { standalone: 'Chart' })
+		.ignore('moment')
+		.plugin(collapse)
+		.bundle()
+		.pipe(source('Chart.js'))
+		.pipe(insert.prepend(header))
+		.pipe(streamify(replace('{{ version }}', package.version)))
+		.pipe(gulp.dest(outDir))
+		.pipe(streamify(uglify()))
+		.pipe(insert.prepend(header))
+		.pipe(streamify(replace('{{ version }}', package.version)))
+		.pipe(streamify(concat('Chart.min.js')))
+		.pipe(gulp.dest(outDir));
 
-  return merge(bundled, nonBundled);
+	return merge(bundled, nonBundled);
 
 }
 
 function packageTask() {
-  return merge(
-      // gather "regular" files landing in the package root
-      gulp.src([outDir + '*.js', 'LICENSE.md']),
+	return merge(
+		// gather "regular" files landing in the package root
+		gulp.src([outDir + '*.js', 'LICENSE.md']),
 
-      // since we moved the dist files one folder up (package root), we need to rewrite
-      // samples src="../dist/ to src="../ and then copy them in the /samples directory.
-      gulp.src('./samples/**/*', { base: '.' })
-        .pipe(streamify(replace(/src="((?:\.\.\/)+)dist\//g, 'src="$1')))
-  )
-  // finally, create the zip archive
-  .pipe(zip('Chart.js.zip'))
-  .pipe(gulp.dest(outDir));
+		// since we moved the dist files one folder up (package root), we need to rewrite
+		// samples src="../dist/ to src="../ and then copy them in the /samples directory.
+		gulp.src('./samples/**/*', { base: '.' })
+			.pipe(streamify(replace(/src="((?:\.\.\/)+)dist\//g, 'src="$1')))
+	)
+	// finally, create the zip archive
+		.pipe(zip('Chart.js.zip'))
+		.pipe(gulp.dest(outDir));
 }
 
 function lintTask() {
-  var files = [
-    srcDir + '**/*.js',
-    testDir + '**/*.js'
-  ];
+	var files = [
+		srcDir + '**/*.js',
+		testDir + '**/*.js'
+	];
 
-  // NOTE(SB) codeclimate has 'complexity' and 'max-statements' eslint rules way too strict
-  // compare to what the current codebase can support, and since it's not straightforward
-  // to fix, let's turn them as warnings and rewrite code later progressively.
-  var options = {
-    rules: {
-      'complexity': [1, 6],
-      'max-statements': [1, 30]
-    },
-    globals: [
-      'Chart',
-      'acquireChart',
-      'afterAll',
-      'afterEach',
-      'beforeAll',
-      'beforeEach',
-      'describe',
-      'expect',
-      'it',
-      'jasmine',
-      'moment',
-      'spyOn',
-      'xit'
-    ]
-  };
+	// NOTE(SB) codeclimate has 'complexity' and 'max-statements' eslint rules way too strict
+	// compare to what the current codebase can support, and since it's not straightforward
+	// to fix, let's turn them as warnings and rewrite code later progressively.
+	var options = {
+		rules: {
+			'complexity': [1, 6],
+			'max-statements': [1, 30]
+		},
+		globals: [
+			'Chart',
+			'acquireChart',
+			'afterAll',
+			'afterEach',
+			'beforeAll',
+			'beforeEach',
+			'describe',
+			'expect',
+			'it',
+			'jasmine',
+			'moment',
+			'spyOn',
+			'xit'
+		]
+	};
 
-  return gulp.src(files)
-    .pipe(eslint(options))
-    .pipe(eslint.format())
-    .pipe(eslint.failAfterError());
+	return gulp.src(files)
+		.pipe(eslint(options))
+		.pipe(eslint.format())
+		.pipe(eslint.failAfterError());
 }
 
 function validHTMLTask() {
-  return gulp.src('samples/*.html')
-    .pipe(htmlv());
+	return gulp.src('samples/*.html')
+		.pipe(htmlv());
 }
 
 function startTest() {
-  return [].concat(preTestFiles).concat([
-      './src/**/*.js',
-      './test/mockContext.js'
-    ]).concat(
-      argv.inputs?
-        argv.inputs.split(';'):
-        testFiles);
+	return [].concat(preTestFiles).concat([
+		'./src/**/*.js',
+		'./test/mockContext.js'
+	]).concat(
+		argv.inputs?
+			argv.inputs.split(';'):
+			testFiles);
 }
 
 function unittestTask() {
-  return gulp.src(startTest())
-    .pipe(karma({
-      configFile: 'karma.conf.ci.js',
-      action: 'run'
-    }));
+	return gulp.src(startTest())
+		.pipe(karma({
+			configFile: 'karma.conf.ci.js',
+			action: 'run'
+		}));
 }
 
 function unittestWatchTask() {
-  return gulp.src(startTest())
-    .pipe(karma({
-      configFile: 'karma.conf.js',
-      action: 'watch'
-    }));
+	return gulp.src(startTest())
+		.pipe(karma({
+			configFile: 'karma.conf.js',
+			action: 'watch'
+		}));
 }
 
 function coverageTask() {
-  return gulp.src(startTest())
-    .pipe(karma({
-      configFile: 'karma.coverage.conf.js',
-      action: 'run'
-    }));
+	return gulp.src(startTest())
+		.pipe(karma({
+			configFile: 'karma.coverage.conf.js',
+			action: 'run'
+		}));
 }
 
 function librarySizeTask() {
-  return gulp.src('dist/Chart.bundle.min.js')
-    .pipe(size({
-      gzip: true
-    }));
+	return gulp.src('dist/Chart.bundle.min.js')
+		.pipe(size({
+			gzip: true
+		}));
 }
 
 function moduleSizesTask() {
-  return gulp.src(srcDir + '**/*.js')
-    .pipe(uglify({
-      preserveComments: 'some'
-    }))
-    .pipe(size({
-      showFiles: true,
-      gzip: true
-    }));
+	return gulp.src(srcDir + '**/*.js')
+		.pipe(uglify({
+			preserveComments: 'some'
+		}))
+		.pipe(size({
+			showFiles: true,
+			gzip: true
+		}));
 }
 
 function watchTask() {
-  if (util.env.test) {
-    return gulp.watch('./src/**', ['build', 'unittest', 'unittestWatch']);
-  }
-  return gulp.watch('./src/**', ['build']);
+	if (util.env.test) {
+		return gulp.watch('./src/**', ['build', 'unittest', 'unittestWatch']);
+	}
+	return gulp.watch('./src/**', ['build']);
 }
 
 function serverTask() {
-  connect.server({
-    port: 8000
-  });
+	connect.server({
+		port: 8000
+	});
 }
 
 // Convenience task for opening the project straight from the command line
 
 function _openTask() {
-  exec('open http://localhost:8000');
-  exec('subl .');
+	exec('open http://localhost:8000');
+	exec('subl .');
 }
